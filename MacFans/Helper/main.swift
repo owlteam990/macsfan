@@ -15,19 +15,7 @@ private struct DaemonState: Codable {
 }
 
 func writeFan(fanID: Int, manual: Bool, rpm: Double?) -> Bool {
-    guard SMC.shared.open() else { return false }
-    let modeOK = SMC.shared.writeData("F\(fanID)Md", bytes: [manual ? 1 : 0])
-    var rpmOK = true
-    if let rpm, manual {
-        let key = "F\(fanID)Tg"
-        if let info = SMC.shared.keyInfo(key),
-           info.type.trimmingCharacters(in: .whitespaces).lowercased() == "flt" {
-            rpmOK = SMC.shared.writeFLT(key, value: Float(rpm))
-        } else {
-            rpmOK = SMC.shared.writeFPE2(key, value: rpm)
-        }
-    }
-    return modeOK && rpmOK
+    FanHardwareControl.apply(fanID: fanID, manual: manual, targetRPM: rpm)
 }
 
 func runOneShot(args: [String]) {
@@ -44,7 +32,26 @@ func runOneShot(args: [String]) {
     exit(writeFan(fanID: fanID, manual: manual, rpm: rpm) ? 0 : 1)
 }
 
+private var daemonSignalSources: [DispatchSourceSignal] = []
+private var daemonShouldStop: Int32 = 0
+
+func installSignalHandlers() {
+    // 用 DispatchSource 做退出清理（避免传统 signal handler 里直接碰 IOKit）
+    let sigs: [Int32] = [SIGTERM, SIGINT]
+    for sig in sigs {
+        signal(sig, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: sig, queue: .global())
+        source.setEventHandler {
+            daemonShouldStop = 1
+        }
+        source.resume()
+        daemonSignalSources.append(source)
+    }
+}
+
 func runDaemon() {
+    installSignalHandlers()
+
     let controlURL = URL(fileURLWithPath: "/tmp/macfans-control.json")
     let pidURL = URL(fileURLWithPath: "/tmp/macfans-helper.pid")
     try? "\(getpid())".data(using: .utf8)?.write(to: pidURL)
@@ -54,18 +61,22 @@ func runDaemon() {
         exit(1)
     }
 
+    // 启动时若上次崩溃留下手动模式，先交还系统再听控制文件
+    let fanCount = Int(SMC.shared.readUInt8("FNum") ?? 0)
+    if (0..<fanCount).contains(where: FanHardwareControl.isManual) {
+        FanHardwareControl.releaseAll(fanCount: fanCount)
+    }
+
     var lastData = Data()
-    while true {
+    while daemonShouldStop == 0 {
         autoreleasepool {
             if let data = try? Data(contentsOf: controlURL), data != lastData {
                 lastData = data
                 let decoder = JSONDecoder()
                 decoder.dateDecodingStrategy = .iso8601
-                if let state = try? decoder.decode(DaemonState.self, from: data) {
-                    for entry in state.fans {
-                        _ = writeFan(fanID: entry.id, manual: entry.manual, rpm: entry.targetRPM)
-                    }
-                } else if let state = try? JSONDecoder().decode(DaemonState.self, from: data) {
+                let state = (try? decoder.decode(DaemonState.self, from: data))
+                    ?? (try? JSONDecoder().decode(DaemonState.self, from: data))
+                if let state {
                     for entry in state.fans {
                         _ = writeFan(fanID: entry.id, manual: entry.manual, rpm: entry.targetRPM)
                     }
@@ -74,6 +85,9 @@ func runDaemon() {
         }
         Thread.sleep(forTimeInterval: 0.4)
     }
+
+    FanHardwareControl.releaseAll()
+    exit(0)
 }
 
 let args = CommandLine.arguments

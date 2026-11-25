@@ -30,8 +30,8 @@ final class FanController: ObservableObject {
         }
         smcAvailable = SMC.shared.open()
         if smcAvailable {
-            refreshFansStructure()
             discoverSensors()
+            refreshFansStructure()
             probeWriteAccess()
             // Avoid password prompts on launch; apply when helper/direct write is ready
             if canWrite || ControlChannel.helperRunning {
@@ -79,10 +79,12 @@ final class FanController: ObservableObject {
             let maxRPM = readRPM("F\(i)Mx") ?? 6000
             let current = readRPM("F\(i)Ac") ?? 0
             let target = readRPM("F\(i)Tg") ?? current
-            let manual = (SMC.shared.readUInt8("F\(i)Md") ?? 0) != 0
+            // 仅 mode==1 为手动；Apple Silicon 的 mode 3 仍是系统托管
+            let manual = FanHardwareControl.isManual(fanID: i)
 
             var strategy = FanStrategy()
             strategy.fixedRPM = maxRPM
+            strategy.sensorKey = SensorCatalog.defaultSensorKey(from: discoveredSensorKeys)
             if manual {
                 strategy.mode = .fixed
                 strategy.fixedRPM = target
@@ -118,7 +120,7 @@ final class FanController: ObservableObject {
         for i in fans.indices {
             fans[i].currentRPM = readRPM("F\(i)Ac") ?? fans[i].currentRPM
             fans[i].targetRPM = readRPM("F\(i)Tg") ?? fans[i].targetRPM
-            fans[i].isManual = (SMC.shared.readUInt8("F\(i)Md") ?? 0) != 0
+            fans[i].isManual = FanHardwareControl.isManual(fanID: i)
         }
 
         var readings: [SensorReading] = []
@@ -171,6 +173,14 @@ final class FanController: ObservableObject {
             }
         }
         discoveredSensorKeys = Array(Set(discoveredSensorKeys)).sorted()
+
+        // 用本机可用传感器回填仍指向缺失键的默认曲线
+        let fallback = SensorCatalog.defaultSensorKey(from: discoveredSensorKeys)
+        for i in fans.indices {
+            if SMC.shared.keyInfo(fans[i].strategy.sensorKey) == nil {
+                fans[i].strategy.sensorKey = fallback
+            }
+        }
     }
 
     private func readRPM(_ key: String) -> Double? {
@@ -270,7 +280,7 @@ final class FanController: ObservableObject {
         }
     }
 
-    /// Push desired state via direct SMC or helper daemon control file.
+    /// 通过特权助手或进程内 SMC 写入（含 Apple Silicon Ftst 解锁）
     private func applyToHardware() {
         if ControlChannel.helperRunning || ControlChannel.helperInstalled {
             publishControlState()
@@ -281,29 +291,18 @@ final class FanController: ObservableObject {
         var allOK = true
         for fan in fans {
             let manual = fan.strategy.mode != .auto
-            let modeOK = SMC.shared.writeData("F\(fan.id)Md", bytes: [manual ? 1 : 0])
-            var rpmOK = true
-            if manual {
-                let rpm = fan.strategy.mode == .fixed ? fan.strategy.fixedRPM : fan.targetRPM
-                rpmOK = writeRPMDirect(fan.targetKey, value: rpm)
+            let rpm: Double? = manual
+                ? (fan.strategy.mode == .fixed ? fan.strategy.fixedRPM : fan.targetRPM)
+                : nil
+            if !FanHardwareControl.apply(fanID: fan.id, manual: manual, targetRPM: rpm) {
+                allOK = false
             }
-            if !(modeOK && rpmOK) { allOK = false }
         }
         canWrite = allOK
         if !allOK {
-            // Publish anyway so once helper is installed it takes effect
+            // 直写失败时仍发布控制文件，装好助手后由 daemon 生效
             publishControlState()
         }
-    }
-
-    private func writeRPMDirect(_ key: String, value: Double) -> Bool {
-        if let info = SMC.shared.keyInfo(key) {
-            let t = info.type.trimmingCharacters(in: .whitespaces).lowercased()
-            if t == "flt" {
-                return SMC.shared.writeFLT(key, value: Float(value))
-            }
-        }
-        return SMC.shared.writeFPE2(key, value: value)
     }
 
     private func setManual(_ manual: Bool, fanID: Int) -> Bool {

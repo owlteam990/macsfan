@@ -51,6 +51,11 @@ final class SMC {
         return (size, Self.keyString(type))
     }
 
+    /// 键是否真实存在（校验 SMC result，避免 NotFound 被当成存在）
+    func keyExists(_ key: String) -> Bool {
+        keyInfo(key) != nil
+    }
+
     func readData(_ key: String) -> (type: String, bytes: [UInt8])? {
         guard open() else { return nil }
         lock.lock()
@@ -64,13 +69,28 @@ final class SMC {
     }
 
     func writeData(_ key: String, bytes: [UInt8]) -> Bool {
-        guard open() else { return false }
+        var result: UInt8 = 0xFF
+        return writeDataEx(key, bytes: bytes, result: &result)
+    }
+
+    /// 写入并返回 SMC result 字节（IOKit 失败时为 0xFF）
+    func writeDataEx(_ key: String, bytes: [UInt8], result: inout UInt8) -> Bool {
+        guard open() else {
+            result = 0xFF
+            return false
+        }
         lock.lock()
         defer { lock.unlock() }
 
-        return bytes.withUnsafeBufferPointer { ptr in
-            smc_write_key(connection, Self.fourCC(key), ptr.baseAddress, UInt32(bytes.count))
+        var out: UInt8 = 0xFF
+        let iokitOK = bytes.withUnsafeBufferPointer { ptr in
+            smc_write_key_ex(connection, Self.fourCC(key), ptr.baseAddress, UInt32(bytes.count), &out)
         }
+        result = out
+        if !iokitOK {
+            return false
+        }
+        return out == 0 || out == UInt8(kSMCResultKeySizeMismatch)
     }
 
     func readUInt8(_ key: String) -> UInt8? {

@@ -29,6 +29,8 @@
 		740CFE1C516A4580B4298C55 /* PrivilegedWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA13A72436A94320BD6D3DDD /* PrivilegedWriter.swift */; };
 		CE17919731444793A749527D /* ControlChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DFCF693B775442A804A2FA0 /* ControlChannel.swift */; };
 		9D93B5AC8BFE473B98A13FDC /* HelperInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BBEAA8631942E5BA65999E /* HelperInstaller.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* FanHardwareControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5061728394A5B6C /* FanHardwareControl.swift */; };
+		C2D3E4F5061728394A5B6C7D /* FanHardwareControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5061728394A5B6C /* FanHardwareControl.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -55,6 +57,7 @@
 		EA13A72436A94320BD6D3DDD /* PrivilegedWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PrivilegedWriter.swift"; sourceTree = "<group>"; };
 		7DFCF693B775442A804A2FA0 /* ControlChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ControlChannel.swift"; sourceTree = "<group>"; };
 		D5BBEAA8631942E5BA65999E /* HelperInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HelperInstaller.swift"; sourceTree = "<group>"; };
+		B1C2D3E4F5061728394A5B6C /* FanHardwareControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FanHardwareControl.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +117,7 @@
 			isa = PBXGroup;
 			children = (
 				732EAE3727AD46CB8FDD33EB /* SMC.swift */,
+				B1C2D3E4F5061728394A5B6C /* FanHardwareControl.swift */,
 				C9E423DE7AA34577ACB866A6 /* SensorCatalog.swift */,
 				B8B4CCE2B4DF43A6AE443850 /* smc_bridge.c */,
 				FF3598D764B74838B17EE69A /* smc_bridge.h */,
@@ -261,6 +265,7 @@
 			files = (
 				67C24A9C939B49BEBB7AE1A6 /* MacFansApp.swift in Sources */,
 				FC90AB795B66480EABE751A5 /* SMC.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* FanHardwareControl.swift in Sources */,
 				AE16E90578674355991BF9D1 /* SensorCatalog.swift in Sources */,
 				A7351BAEEB3E4DBA8F9CA20A /* FanModels.swift in Sources */,
 				99373843721F4F2AA7EF75D5 /* FanController.swift in Sources */,
@@ -284,6 +289,7 @@
 			files = (
 				71F23E3D3AA245C5BE792285 /* helper_main.swift in Sources */,
 				99C607B64E8A41CDAB536D18 /* SMC.swift in Sources */,
+				C2D3E4F5061728394A5B6C7D /* FanHardwareControl.swift in Sources */,
 				73344807D77E42DA81451465 /* smc_bridge.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -326,7 +332,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MacFans/Info.plist;
@@ -334,7 +340,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.macfans.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -349,7 +355,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MacFans/Info.plist;
@@ -357,7 +363,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.macfans.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

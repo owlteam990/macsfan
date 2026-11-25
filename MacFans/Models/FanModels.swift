@@ -25,8 +25,8 @@ struct CurvePoint: Codable, Hashable, Identifiable {
 struct FanStrategy: Codable, Hashable {
     var mode: FanControlMode = .auto
     var fixedRPM: Double = 0
-    /// Sensor SMC key used when mode == .sensor
-    var sensorKey: String = "TC0P"
+    /// Sensor SMC key used when mode == .sensor（启动后按本机可用键回填）
+    var sensorKey: String = "Tp01"
     /// Temperature → RPM curve (sorted by temperature)
     var curve: [CurvePoint] = [
         CurvePoint(temperature: 40, rpm: 2000),
@@ -74,7 +74,8 @@ struct FanInfo: Identifiable, Hashable {
     var minKey: String { "F\(id)Mn" }
     var maxKey: String { "F\(id)Mx" }
     var targetKey: String { "F\(id)Tg" }
-    var modeKey: String { "F\(id)Md" }
+    /// 运行时解析：优先 `F{n}Md`，否则 `F{n}md`（M5）
+    var modeKey: String { FanHardwareControl.modeKey(for: id) ?? "F\(id)Md" }
     var idKey: String { "F\(id)ID" }
 }
 
