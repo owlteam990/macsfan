@@ -2,7 +2,13 @@
 
 免费的 macOS 风扇控制工具，功能对齐 [Macs Fan Control](https://crystalidea.com/macs-fan-control)，**自定义预设 / 传感器曲线等 Pro 功能全部免费**。
 
-> 已在 **MacBookPro16,1**（Intel）与 **Mac16,10**（Apple M4）上验证读取；写入需一次性安装权限助手（root）。
+> 已在 **MacBookPro16,1**（Intel）与 **Mac16,10**（Apple M4）上验证；写入需一次性安装权限助手（root）。
+
+## 下载
+
+从 [Releases](https://github.com/owlteam990/macsfan/releases) 下载最新 `MacFans-x.y.z.dmg`。
+
+**Intel 与 Apple Silicon（M 芯片）共用同一个包**，无需分别下载。DMG 内为 universal 二进制（`x86_64` + `arm64`），运行时自动按机型选择写入路径。
 
 ## 功能
 
@@ -14,12 +20,16 @@
 - **预设管理**：创建 / 保存 / 重命名 / 快速切换（原 Pro 功能，免费）
 - 菜单栏快捷切换预设
 - 登录启动（可选）
-- **Apple Silicon 写入**：自动探测 `F*Md` / `F*md`；M3/M4 在需要时通过 `Ftst` 解锁后再写目标转速
+- **跨架构写入**：
+  - 自动探测模式键 `F*Md` / `F*md`
+  - Apple Silicon（M3/M4）：需要时通过 `Ftst` 解锁后再写目标转速
+  - Intel：`FS!` 位掩码或直写 SMC
 
 ## 要求
 
 - macOS 13+
-- Intel 或 Apple Silicon Mac（均走 AppleSMC）。无风扇机型仅可查看传感器。
+- Intel 或 Apple Silicon Mac（均走 AppleSMC）
+- 无风扇机型仅可查看传感器
 
 ## 编译与运行
 
@@ -39,7 +49,7 @@ open build/DerivedData/Build/Products/Debug/MacFans.app
 ./scripts/package-dmg.sh
 ```
 
-产物：`build/dist/MacFans-<version>.dmg`（含 `.app`、Applications 快捷方式与安装说明）。
+产物：`build/dist/MacFans-<version>.dmg`（universal，含 `.app`、Applications 快捷方式与安装说明）。一份 DMG 即可同时分发给 Intel 与 M 芯片用户。
 
 ## 首次控制风扇
 

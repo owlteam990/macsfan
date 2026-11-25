@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-11-25
+
+### 模块：macfans（文档）
+
+**变动类型：** 优化
+
+**变动描述：**
+- README 明确 Intel 与 Apple Silicon 共用同一 universal DMG，无需分两个包
+- 补充 Releases 下载入口与跨架构写入说明
+
+**影响范围：**
+- `README.md`
+
+**变动人：** Auto
+
 ## [1.1.0] - 2026-11-25
 
 ### 模块：macfans（风扇控制）
