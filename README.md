@@ -1,0 +1,66 @@
+# MacFans
+
+免费的 macOS 风扇控制工具，功能对齐 [Macs Fan Control](https://crystalidea.com/macs-fan-control)，**自定义预设 / 传感器曲线等 Pro 功能全部免费**。
+
+> 已在 **MacBookPro16,1**（Intel）上验证 SMC 读取。写入风扇转速需要一次性安装权限助手。
+
+## 功能
+
+- 实时显示风扇转速（最低 / 当前 / 最大）与温度传感器
+- 控制策略：
+  - **自动**：交还系统 SMC 控制
+  - **固定转速**：手动设定 RPM
+  - **传感器控制**：按温度曲线调节（原 Pro 功能）
+- **预设管理**：创建 / 保存 / 重命名 / 快速切换（原 Pro 功能，免费）
+- 菜单栏快捷切换预设
+- 登录启动（可选）
+
+## 要求
+
+- macOS 13+
+- Intel Mac（Apple SMC）。Apple Silicon 机型风扇控制接口不同，暂不支持写入。
+
+## 编译与运行
+
+```bash
+cd macfans
+xcodebuild -project MacFans.xcodeproj -scheme MacFans -configuration Debug \
+  -derivedDataPath build/DerivedData build
+
+open build/DerivedData/Build/Products/Debug/MacFans.app
+```
+
+或用 Xcode 打开 `MacFans.xcodeproj` 后 Run。
+
+## 打包 DMG
+
+```bash
+./scripts/package-dmg.sh
+```
+
+产物：`build/dist/MacFans-<version>.dmg`（含 `.app`、Applications 快捷方式与安装说明）。
+
+## 首次控制风扇
+
+1. 打开应用（可先查看转速与温度，无需权限）
+2. 点击底部 **安装权限助手…**，输入管理员密码（仅一次）
+3. 助手以 LaunchDaemon 方式运行，之后切换预设 / 调转速不再弹窗
+
+卸载助手：
+
+```bash
+# 或在应用内扩展；命令行：
+sudo launchctl bootout system /Library/LaunchDaemons/com.macfans.helper.plist
+sudo rm -f /Library/LaunchDaemons/com.macfans.helper.plist \
+  /Library/PrivilegedHelperTools/com.macfans.FanWriteTool
+```
+
+## 安全说明
+
+- 强制高转速会增加噪音与功耗；长期全速运行可能缩短风扇寿命。
+- 退出前建议切回「自动」预设。
+- 本项目与 CrystalIDEA / Macs Fan Control 无关，为独立实现。
+
+## 许可
+
+免费使用，可自由修改与分发。
